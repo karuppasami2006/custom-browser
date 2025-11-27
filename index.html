@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>My Browser</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    .nav { padding: 8px; background: #222; color: #fff; display:flex; gap:8px; align-items:center; }
+    .nav input { flex:1; padding:6px; border-radius:4px; border: none; }
+    .nav button { padding:6px 8px; border-radius:4px; border:none; cursor:pointer; }
+    webview { width:100vw; height: calc(100vh - 48px); border:none; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <button id="back" title="Back">⬅</button>
+    <button id="forward" title="Forward">➡</button>
+    <button id="reload" title="Reload">⟳</button>
+
+    <input id="url" placeholder="Enter URL (eg: example.com or https://example.com)" />
+    <button id="go">Go</button>
+  </div>
+
+  <!-- webview: start page -->
+  <webview id="webview" src="https://www.google.com" partition="persist:webview"></webview>
+
+  <script>
+    const webview = document.getElementById('webview');
+    const urlInput = document.getElementById('url');
+
+    document.getElementById('back').addEventListener('click', () => {
+      if (webview.canGoBack()) webview.goBack();
+    });
+
+    document.getElementById('forward').addEventListener('click', () => {
+      if (webview.canGoForward()) webview.goForward();
+    });
+
+    document.getElementById('reload').addEventListener('click', () => webview.reload());
+
+    document.getElementById('go').addEventListener('click', () => {
+      let url = urlInput.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      webview.loadURL(url);
+    });
+
+    // keep the URL bar synced with webview navigation
+    webview.addEventListener('did-navigate', (e) => { urlInput.value = e.url; });
+    webview.addEventListener('did-navigate-in-page', (e) => { urlInput.value = e.url; });
+    webview.addEventListener('page-title-updated', (e) => { document.title = e.title || 'My Browser'; });
+
+    // optional: enable Enter key in the URL bar
+    urlInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') document.getElementById('go').click();
+    });
+  </script>
+</body>
+</html>

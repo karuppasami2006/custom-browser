@@ -1,0 +1,23 @@
+body {
+  margin: 0;
+}
+
+.nav {
+  padding: 10px;
+  background: #222;
+  display: flex;
+  gap: 10px;
+}
+
+.nav input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+iframe {
+  width: 100vw;
+  height: calc(100vh - 50px);
+  border: none;
+}
