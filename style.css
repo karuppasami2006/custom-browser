@@ -1,23 +1,74 @@
-body {
-  margin: 0;
-}
+ body {
+      margin: 0;
+      background: #1b1b1d;
+      font-family: Inter, sans-serif;
+      color: white;
+      overflow: hidden;
+    }
 
-.nav {
-  padding: 10px;
-  background: #222;
-  display: flex;
-  gap: 10px;
-}
+    /* ---- NAVBAR ---- */
+    .nav {
+      background: #1f1f22;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #2a2a2d;
+    }
 
-.nav input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 4px;
-  border: none;
-}
+    /* Zen‑style icon buttons */
+    .nav button {
+      background: #2a2a2d;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      font-size: 16px;
+      color: #c7c7c7;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
 
-iframe {
-  width: 100vw;
-  height: calc(100vh - 50px);
-  border: none;
-}
+    .nav button:hover {
+      background: #3a3a3d;
+      color: white;
+    }
+
+    /* ---- Zen‑style address bar ---- */
+    .nav input {
+      flex: 1;
+      padding: 10px 14px;
+      border: none;
+      outline: none;
+      border-radius: 12px;
+      font-size: 15px;
+      background: #2a2a2d;
+      color: #ececec;
+      transition: 0.2s ease;
+    }
+
+    .nav input:focus {
+      background: #323235;
+    }
+
+    .go-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #4e6ef2;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+
+    .go-btn:hover {
+      background: #6682ff;
+    }
+
+    /* ---- WEBVIEW ---- */
+    webview {
+      width: 100vw;
+      height: calc(100vh - 60px);
+      border: none;
+    }
