@@ -1,74 +1,254 @@
- body {
-      margin: 0;
-      background: #1b1b1d;
-      font-family: Inter, sans-serif;
-      color: white;
-      overflow: hidden;
-    }
+:root {
+  --bg: #0f1113;
+  --panel: #151719;
+  --muted: #9aa0a6;
+  --accent: #4b8bff;
+  --card: #17191b;
+  --radius: 12px;
+  --gap: 12px;
+  --text: #e6e9ee;
+}
 
-    /* ---- NAVBAR ---- */
-    .nav {
-      background: #1f1f22;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid #2a2a2d;
-    }
+[data-theme="light"] {
+  --bg: #f0f0f0;
+  --panel: #e3e3e3;
+  --muted: #666;
+  --accent: #4b8bff;
+  --card: #fff;
+  --text: #222;
+}
 
-    /* Zen‑style icon buttons */
-    .nav button {
-      background: #2a2a2d;
-      border: none;
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      font-size: 16px;
-      color: #c7c7c7;
-      cursor: pointer;
-      transition: 0.2s ease;
-    }
-
-    .nav button:hover {
-      background: #3a3a3d;
-      color: white;
-    }
-
-    /* ---- Zen‑style address bar ---- */
-    .nav input {
-      flex: 1;
-      padding: 10px 14px;
-      border: none;
-      outline: none;
-      border-radius: 12px;
-      font-size: 15px;
-      background: #2a2a2d;
-      color: #ececec;
-      transition: 0.2s ease;
-    }
-
-    .nav input:focus {
-      background: #323235;
-    }
-
-    .go-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 10px;
-      background: #4e6ef2;
-      color: white;
-      cursor: pointer;
-      font-weight: 500;
-      transition: 0.2s;
-    }
-
-    .go-btn:hover {
-      background: #6682ff;
-    }
-
-    /* ---- WEBVIEW ---- */
-    webview {
-      width: 100vw;
-      height: calc(100vh - 60px);
-      border: none;
-    }
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+#app {
+  display: flex;
+}
+/* SIDEBAR */
+#sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.side-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+}
+#newTabBtn {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 16px;
+}
+.section-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.tab-item,
+.bookmark-item,
+.history-item {
+  background: var(--card);
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+}
+.tab-item.active {
+  outline: 2px solid rgba(75, 139, 255, 0.18);
+}
+.tab-item .tab-switch,
+.bookmark-item .open-bookmark {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+  text-decoration: none;
+}
+.tab-item .tab-close,
+.bookmark-item .delete-bookmark {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 6px;
+}
+.bookmark-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.bookmark-actions input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: transparent;
+  color: var(--text);
+}
+.bookmark-actions button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+/* MAIN AREA */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 10px;
+  background: var(--panel);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  justify-content: space-between;
+  user-select: none;
+}
+.nav-left,
+.nav-center,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-center {
+  flex: 1;
+  justify-content: center;
+}
+.nav-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+}
+#searchEngine {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+#urlInput {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  outline-offset: 2px;
+}
+.accent {
+  background: var(--accent);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+/* webview container */
+#viewContainer {
+  flex: 1;
+  background: #08090a;
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+webview {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+/* Command palette */
+#cmdPalette {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 12%;
+  width: 600px;
+  background: rgba(20, 22, 24, 0.95);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#cmdPalette.hidden {
+  display: none;
+}
+#cmdInput {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+}
+#cmdHints {
+  font-size: 13px;
+  color: var(--muted);
+}
+.secondary {
+  background: transparent;
+  color: var(--muted);
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}

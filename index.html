@@ -1,59 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Atom Browser</title>
-   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="side-header">
+        <div class="brand">Atom Browser</div>
+        <button id="newTabBtn" title="New Tab">＋</button>
+      </div>
+      <section class="section">
+        <div class="section-title">Tabs</div>
+        <div id="tabsList" class="list"></div>
+      </section>
+      <section class="section">
+        <div class="section-title">Bookmarks</div>
+        <div id="bookmarksList" class="list"></div>
+        <div class="bookmark-actions">
+          <input id="bookmarkName" type="text" placeholder="Bookmark name" />
+          <button id="addBookmarkBtn" title="Add Bookmark">Save</button>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-title">History</div>
+        <div id="historyList" class="list"></div>
+        <button id="clearHistoryBtn" title="Clear History">Clear</button>
+      </section>
+    </aside>
 
-  <div class="nav">
-    <button id="back">←</button>
-    <button id="forward">→</button>
-    <button id="reload">⟳</button>
+    <main id="main">
+      <header id="topbar">
+        <div class="nav-left">
+          <button id="backBtn" class="nav-btn" title="Back">&larr;</button>
+          <button id="forwardBtn" class="nav-btn" title="Forward">&rarr;</button>
+          <button id="reloadBtn" class="nav-btn" title="Reload">&#x21bb;</button>
+        </div>
+        <div class="nav-center">
+          <input id="urlInput" type="text" placeholder="Enter URL or search" />
+          <button id="goBtn" class="accent" title="Go">Go</button>
+        </div>
+        <div class="nav-right">
+          <select id="searchEngine" title="Search Engine">
+            <option value="https://www.google.com/search?q=">Google</option>
+            <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+            <option value="https://www.bing.com/search?q=">Bing</option>
+          </select>
+          <button id="themeToggle" class="nav-btn" title="Toggle Theme">🌓</button>
+          <button id="cmdBtn" class="nav-btn" title="Command Palette">⌘</button>
+        </div>
+      </header>
 
-    <input id="url" placeholder="Search or enter URL..." />
-    <button id="go" class="go-btn">Go</button>
+      <div id="viewContainer"></div>
+
+      <div id="cmdPalette" class="hidden">
+        <input id="cmdInput" type="text" placeholder="Type a command..." autocomplete="off" />
+        <div id="cmdHints"></div>
+      </div>
+    </main>
   </div>
 
-  <webview
-    id="webview"
-    src="https://search.brave.com"
-    partition="persist:webview">
-  </webview>
-
-  <script>
-    const webview = document.getElementById("webview");
-    const urlInput = document.getElementById("url");
-
-    document.getElementById("back").onclick = () => {
-      if (webview.canGoBack()) webview.goBack();
-    };
-
-    document.getElementById("forward").onclick = () => {
-      if (webview.canGoForward()) webview.goForward();
-    };
-
-    document.getElementById("reload").onclick = () => webview.reload();
-
-    document.getElementById("go").onclick = () => {
-      let url = urlInput.value.trim();
-      if (!url) return;
-
-      if (!/^https?:\/\//i.test(url))
-        url = "https://" + url;
-
-      webview.loadURL(url);
-    };
-
-    webview.addEventListener("did-navigate", e => urlInput.value = e.url);
-    webview.addEventListener("did-navigate-in-page", e => urlInput.value = e.url);
-
-    urlInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") document.getElementById("go").click();
-    });
-  </script>
-
+  <script src="renderer.js"></script>
 </body>
 </html>
