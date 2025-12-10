@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zen — Home</title>
+  <link rel="stylesheet" href="home.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="sidebar-left">
+      <!-- left area: optionally fill with shortcuts / small widgets -->
+    </div>
+
+    <main class="main-area">
+      <div class="top-left">
+        <div id="clock" class="clock">00:00</div>
+      </div>
+
+      <section class="center-content" role="main">
+        <div class="logo">Zen</div>
+
+        <div class="search-row">
+          <input id="searchInput" class="search-input" placeholder="Search or enter website…" />
+          <select id="engineSelect" class="engine-select">
+            <option value="https://www.google.com/search?q=">Google</option>
+            <option value="https://search.brave.com/search?q=">Brave</option>
+            <option value="https://duckduckgo.com/?q=" selected>DuckDuckGo</option>
+            <option value="https://kagi.com/search?q=">Kagi</option>
+          </select>
+          <button id="searchBtn" class="search-btn">Search</button>
+        </div>
+
+        <div class="favorites" id="favorites">
+          <!-- favorites inserted by JS -->
+        </div>
+      </section>
+
+      
+    </main>
+  </div>
+
+  <script src="home.js"></script>
+</body>
+</html>

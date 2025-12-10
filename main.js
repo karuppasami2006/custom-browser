@@ -1,26 +1,28 @@
+// main.js
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+// Uncomment to test GPU-rendering issues if needed:
+// app.disableHardwareAcceleration();
+
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 820,
+    width: 1200,
+    height: 800,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#101214',
+    backgroundColor: '#0f1113',
+    titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       webviewTag: true
-    },
-    title: 'Atom Browser'
+    }
   });
 
   win.loadFile('index.html');
-
-  // Optional: open DevTools for debugging
-  // win.webContents.openDevTools();
+  // win.webContents.openDevTools({ mode: 'detach' }); // uncomment for debugging
 }
 
 app.whenReady().then(createWindow);

@@ -1,92 +1,59 @@
-// renderer.js - handles tabs, bookmarks, history, command palette, navigation
-const DEFAULT_START = 'https://search.brave.com/';
+// renderer.js — tab manager, navigation, bookmarks, simple Zen features
 
-// DOM refs
+const DEFAULT_START = `file://D:\custom-browser/home/home.html`;
+
+
 const viewContainer = document.getElementById('viewContainer');
-const tabsListEl = document.getElementById('tabsList');
-const bookmarksListEl = document.getElementById('bookmarksList');
-const historyListEl = document.getElementById('historyList');
+const tabsList = document.getElementById('tabsList');
+const bookmarksList = document.getElementById('bookmarksList');
 
-const newTabBtn = document.getElementById('newTabBtn');
 const backBtn = document.getElementById('backBtn');
 const forwardBtn = document.getElementById('forwardBtn');
 const reloadBtn = document.getElementById('reloadBtn');
-const urlInput = document.getElementById('urlInput');
 const goBtn = document.getElementById('goBtn');
-const searchEngineEl = document.getElementById('searchEngine');
+const urlInput = document.getElementById('urlInput');
+const engineSelect = document.getElementById('engineSelect');
 
-const bookmarkNameInput = document.getElementById('bookmarkName');
-const addBookmarkBtn = document.getElementById('addBookmarkBtn');
-const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+const tabsBtn = document.getElementById('tabsBtn');
+const bookmarkBtn = document.getElementById('bookmarkBtn');
+const themeBtn = document.getElementById('themeBtn');
 
-const cmdBtn = document.getElementById('cmdBtn');
-const cmdPalette = document.getElementById('cmdPalette');
-const cmdInput = document.getElementById('cmdInput');
-const cmdHints = document.getElementById('cmdHints');
-const themeToggle = document.getElementById('themeToggle');
-
-// Storage helpers
-const STORAGE = {
-  tabs: 'atom_tabs_v1',
-  bookmarks: 'atom_bookmarks_v1',
-  history: 'atom_history_v1',
-  theme: 'atom_theme_v1'
-};
+const STORAGE_BOOKMARKS = 'zen_bookmarks_v1';
 
 let state = {
   tabs: [],
   activeId: null,
-  bookmarks: JSON.parse(localStorage.getItem(STORAGE.bookmarks) || '[]'),
-  history: JSON.parse(localStorage.getItem(STORAGE.history) || '[]'),
-  theme: localStorage.getItem(STORAGE.theme) || 'dark'
+  bookmarks: JSON.parse(localStorage.getItem(STORAGE_BOOKMARKS) || '[]'),
+  theme: 'dark'
 };
 
-function saveBookmarks(){ localStorage.setItem(STORAGE.bookmarks, JSON.stringify(state.bookmarks)) }
-function saveHistory(){ localStorage.setItem(STORAGE.history, JSON.stringify(state.history)) }
-function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); localStorage.setItem(STORAGE.theme, state.theme) }
-
-// Utility: format input to URL or search
+// utils
 function formatInput(text){
   if(!text) return DEFAULT_START;
   text = text.trim();
-  if(/^[a-zA-Z]+:\/\/|^data:/.test(text)) return text;
-  if(text.includes(' ')) {
-    const base = searchEngineEl.value;
-    return base + encodeURIComponent(text);
-  }
-  if(text.includes('.')) {
-    return text.startsWith('http') ? text : 'https://' + text;
-  }
-  return searchEngineEl.value + encodeURIComponent(text);
+  if(/^[a-zA-Z]+:\/\//.test(text) || text.startsWith('data:')) return text;
+  if(text.includes(' ')) return engineSelect.value + encodeURIComponent(text);
+  if(text.includes('.')) return text.startsWith('http') ? text : 'https://' + text;
+  return engineSelect.value + encodeURIComponent(text);
 }
 
-// TAB MANAGEMENT
-function renderTabs(){
-  tabsListEl.innerHTML = '';
-  state.tabs.forEach(t=>{
-    const el = document.createElement('div');
-    el.className = 'tab-item' + (t.id===state.activeId ? ' active':'');
-    el.innerHTML = `<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title||t.url}</div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button data-id="${t.id}" class="tab-switch secondary">↗</button>
-        <button data-id="${t.id}" class="tab-close">✕</button>
-      </div>`;
-    el.querySelector('.tab-switch').addEventListener('click', ()=> switchTab(t.id));
-    el.querySelector('.tab-close').addEventListener('click', ()=> closeTab(t.id));
-    tabsListEl.appendChild(el);
-  });
-}
-
+// webview creation & tab system (robust)
 function createWebview(url){
   const w = document.createElement('webview');
   w.setAttribute('src', url || DEFAULT_START);
-  w.setAttribute('partition', 'persist:webview');
+  w.setAttribute('partition', 'persist:zen');
   w.setAttribute('allowpopups', '');
-  w.style.display = 'none';
-  w.addEventListener('did-navigate', (e)=> onNavigate(e.url));
-  w.addEventListener('did-navigate-in-page', (e)=> onNavigate(e.url));
-  w.addEventListener('page-title-updated', (e)=> {
-    const t = state.tabs.find(x=>x.webview===w);
+  w.classList.add('hiddenTab');
+  w.style.position = 'absolute';
+  w.style.inset = '0';
+  w.style.width = '100%';
+  w.style.height = '100%';
+  w.style.border = 'none';
+  w.style.willChange = 'transform, opacity';
+  w.addEventListener('did-navigate', (e) => onNavigate(e.url));
+  w.addEventListener('did-navigate-in-page', (e) => onNavigate(e.url));
+  w.addEventListener('page-title-updated', (e) => {
+    const t = state.tabs.find(x => x.webview === w);
     if(t){ t.title = e.title; renderTabs(); }
   });
   return w;
@@ -96,7 +63,7 @@ function newTab(url){
   const webview = createWebview(url);
   viewContainer.appendChild(webview);
   const id = Date.now() + Math.floor(Math.random()*1000);
-  const tab = { id, webview, url: url||DEFAULT_START, title: 'New Tab' };
+  const tab = { id, webview, url: url || DEFAULT_START, title: 'New Tab' };
   state.tabs.push(tab);
   switchTab(id);
   renderTabs();
@@ -104,201 +71,142 @@ function newTab(url){
 }
 
 function switchTab(id){
+  const target = state.tabs.find(t => t.id === id);
+  if(!target) return;
   state.tabs.forEach(t=>{
-    if(t.id===id){
-      t.webview.style.display = 'block';
-      state.activeId = id;
-      // sync url input
-      try{ urlInput.value = t.webview.getURL() || t.url }catch(e){}
+    if(!t.webview) return;
+    if(t.id === id){
+      t.webview.classList.remove('hiddenTab');
+      t.webview.classList.add('activeTab');
+      try { viewContainer.appendChild(t.webview); } catch(e){}
+      t.webview.style.transform = 'translateZ(0)';
     } else {
-      t.webview.style.display = 'none';
+      t.webview.classList.remove('activeTab');
+      t.webview.classList.add('hiddenTab');
     }
   });
+  state.activeId = id;
+  setTimeout(()=> {
+    const active = getActiveWebview();
+    try { urlInput.value = active ? (active.getURL() || target.url) : ''; } catch(e){}
+  }, 50);
   renderTabs();
 }
 
 function closeTab(id){
-  const idx = state.tabs.findIndex(t=>t.id===id);
-  if(idx===-1) return;
+  const idx = state.tabs.findIndex(t => t.id === id);
+  if(idx === -1) return;
   const tab = state.tabs[idx];
-  // remove webview from DOM and memory
-  try{ tab.webview.remove(); } catch(e){}
+  try { tab.webview.remove(); } catch(e){}
   state.tabs.splice(idx,1);
-  if(state.activeId===id){
+  if(state.activeId === id){
     if(state.tabs.length) switchTab(state.tabs[Math.max(0, idx-1)].id);
     else newTab(DEFAULT_START);
+  } else {
+    renderTabs();
   }
-  renderTabs();
 }
 
-// NAV & URL
-function getActiveWebview(){
-  return (state.tabs.find(t=>t.id===state.activeId) || {}).webview;
-}
-function navigateTo(input){
-  const url = formatInput(input);
-  const webview = getActiveWebview();
-  if(!webview) return;
-  webview.loadURL(url);
-  // add to history
-  state.history.unshift({ url, ts: Date.now() });
-  if(state.history.length>200) state.history.length = 200;
-  saveHistory();
-  renderHistory();
-}
+function getActiveWebview(){ return (state.tabs.find(t => t.id === state.activeId) || {}).webview; }
 
-// EVENTS
 function onNavigate(url){
   urlInput.value = url;
-  const active = state.tabs.find(t=>t.id===state.activeId);
-  if(active){ active.url = url; active.title = active.title || url; renderTabs(); }
-  // push to history
-  state.history.unshift({ url, ts: Date.now() });
-  if(state.history.length>200) state.history.length = 200;
-  saveHistory();
-  renderHistory();
+  const active = state.tabs.find(t => t.id === state.activeId);
+  if(active){ active.url = url; renderTabs(); }
 }
 
-// BOOKMARKS & HISTORY UI
+// UI rendering
+function renderTabs(){
+  tabsList.innerHTML = '';
+  state.tabs.forEach(t=>{
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title || t.url}</div>
+      <div style="display:flex;gap:6px">
+        <button class="tab-switch" data-id="${t.id}">⤴</button>
+        <button class="tab-close" data-id="${t.id}">✕</button>
+      </div>`;
+    el.querySelector('.tab-switch').addEventListener('click', ()=> switchTab(t.id));
+    el.querySelector('.tab-close').addEventListener('click', ()=> closeTab(t.id));
+    if(t.id === state.activeId) el.style.outline = '2px solid rgba(75,139,255,0.12)';
+    tabsList.appendChild(el);
+  });
+}
+
 function renderBookmarks(){
-  bookmarksListEl.innerHTML = '';
+  bookmarksList.innerHTML = '';
   state.bookmarks.forEach((b, i)=>{
     const el = document.createElement('div');
-    el.className = 'bookmark-item';
+    el.className = 'item';
     el.innerHTML = `<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.name}</div>
-      <div style="display:flex;gap:8px">
-        <button class="open-bookmark" data-i="${i}">⤴</button>
-        <button class="delete-bookmark" data-i="${i}">✕</button>
+      <div style="display:flex;gap:6px">
+        <button class="open-bm" data-i="${i}">⤴</button>
+        <button class="del-bm" data-i="${i}">✕</button>
       </div>`;
-    el.querySelector('.open-bookmark').addEventListener('click', ()=> {
-      const b = state.bookmarks[parseInt(el.querySelector('.open-bookmark').dataset.i)];
-      newTab(b.url); // open in new tab
-    });
-    el.querySelector('.delete-bookmark').addEventListener('click', ()=> {
-      state.bookmarks.splice(parseInt(el.querySelector('.delete-bookmark').dataset.i),1);
+    el.querySelector('.open-bm').addEventListener('click', ()=> newTab(b.url));
+    el.querySelector('.del-bm').addEventListener('click', ()=> {
+      state.bookmarks.splice(parseInt(el.querySelector('.del-bm').dataset.i),1);
       saveBookmarks(); renderBookmarks();
     });
-    bookmarksListEl.appendChild(el);
+    bookmarksList.appendChild(el);
   });
 }
 
-function renderHistory(){
-  historyListEl.innerHTML = '';
-  state.history.slice(0,50).forEach((h, i)=>{
-    const el = document.createElement('div');
-    el.className = 'history-item';
-    el.innerHTML = `<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.url}</div>
-      <div style="color:var(--muted);font-size:12px">${new Date(h.ts).toLocaleTimeString()}</div>`;
-    el.addEventListener('click', ()=> newTab(h.url));
-    historyListEl.appendChild(el);
-  });
-}
+function saveBookmarks(){ localStorage.setItem(STORAGE_BOOKMARKS, JSON.stringify(state.bookmarks)) }
 
-// COMMAND PALETTE
-function showCmdPalette(){
-  cmdPalette.classList.remove('hidden');
-  cmdInput.value = '';
-  cmdInput.focus();
-  updateCmdHints('');
-}
-function hideCmdPalette(){ cmdPalette.classList.add('hidden'); }
-function updateCmdHints(text){
-  const t = text.toLowerCase();
-  const hints = [];
-  if(!t) hints.push('Commands: new tab, open <url>, toggle theme, bookmarks, history');
-  if(t.startsWith('new')) hints.push('Type: new tab (open with default homepage)');
-  if(t.startsWith('open ')) hints.push('Type: open https://example.com or open google.com');
-  if(t.startsWith('toggle')) hints.push('toggle theme');
-  cmdHints.textContent = hints.join(' • ');
-}
-function executeCmd(text){
-  const t = text.trim();
-  if(t==='new tab') newTab(DEFAULT_START);
-  else if(t.startsWith('open ')) {
-    const url = t.slice(5).trim();
-    newTab(formatInput(url));
-  }
-  else if(t==='toggle theme'){
+// toolbar actions & bindings
+function bindUI(){
+  newTab(DEFAULT_START); // start with one tab
+
+  goBtn.addEventListener('click', ()=> navigate(urlInput.value));
+  urlInput.addEventListener('keydown', e => { if(e.key==='Enter') navigate(urlInput.value); });
+
+  backBtn.addEventListener('click', ()=> { const w = getActiveWebview(); if(w && w.canGoBack()) w.goBack(); });
+  forwardBtn.addEventListener('click', ()=> { const w = getActiveWebview(); if(w && w.canGoForward()) w.goForward(); });
+  reloadBtn.addEventListener('click', ()=> { const w = getActiveWebview(); if(w) w.reload(); });
+
+  tabsBtn.addEventListener('click', ()=> newTab(DEFAULT_START));
+
+  bookmarkBtn.addEventListener('click', ()=>{
+    const w = getActiveWebview();
+    const url = w ? (w.getURL ? w.getURL() : '') : urlInput.value;
+    const name = url || 'Bookmark';
+    state.bookmarks.push({ name, url });
+    saveBookmarks(); renderBookmarks();
+  });
+
+  themeBtn.addEventListener('click', ()=> {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
     applyTheme();
-  } else if(t==='bookmarks') {
-    // focus bookmarks area (no fancy scroll here)
-    alert('Bookmarks are in the left sidebar.');
-  } else if(t==='history') {
-    alert('History is in the left sidebar.');
-  } else {
-    // fallback: try navigate in active tab
-    navigateTo(t);
-  }
-  hideCmdPalette();
-}
-
-// RENDERERS FOR LEFT SIDE
-function bindUI(){
-  newTabBtn.addEventListener('click', ()=> newTab(DEFAULT_START));
-  goBtn.addEventListener('click', ()=> navigateTo(urlInput.value));
-  urlInput.addEventListener('keydown', e=> { if(e.key==='Enter') navigateTo(urlInput.value); });
-
-  backBtn.addEventListener('click', ()=> {
-    const w = getActiveWebview(); if(w && w.canGoBack()) w.goBack();
-  });
-  forwardBtn.addEventListener('click', ()=> {
-    const w = getActiveWebview(); if(w && w.canGoForward()) w.goForward();
-  });
-  reloadBtn.addEventListener('click', ()=> {
-    const w = getActiveWebview(); if(w) w.reload();
-  });
-
-  addBookmarkBtn.addEventListener('click', ()=>{
-    const w = getActiveWebview();
-    const name = bookmarkNameInput.value.trim() || (w ? (w.getTitle && w.getTitle()) : 'Bookmark');
-    const url = w ? (w.getURL ? w.getURL() : '') : urlInput.value;
-    if(!url) return alert('No url to bookmark');
-    state.bookmarks.push({ name, url });
-    saveBookmarks(); renderBookmarks(); bookmarkNameInput.value='';
-  });
-
-  clearHistoryBtn.addEventListener('click', ()=> {
-    state.history = []; saveHistory(); renderHistory();
-  });
-
-  // command palette
-  cmdBtn.addEventListener('click', showCmdPalette);
-  cmdInput.addEventListener('input', (e)=> updateCmdHints(e.target.value));
-  cmdInput.addEventListener('keydown', (e)=> {
-    if(e.key==='Enter') executeCmd(e.target.value);
-    if(e.key==='Escape') hideCmdPalette();
   });
 
   // keyboard shortcuts
-  window.addEventListener('keydown', (e)=> {
-    if(e.ctrlKey && e.key.toLowerCase()==='k'){ e.preventDefault(); showCmdPalette(); }
+  window.addEventListener('keydown', (e)=>{
     if(e.ctrlKey && e.key.toLowerCase()==='t'){ e.preventDefault(); newTab(DEFAULT_START); }
     if(e.ctrlKey && e.key.toLowerCase()==='w'){ e.preventDefault(); closeTab(state.activeId); }
-  });
-
-  themeToggle.addEventListener('click', ()=> {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    applyTheme();
+    if(e.ctrlKey && e.key.toLowerCase()==='l'){ e.preventDefault(); urlInput.focus(); urlInput.select(); }
   });
 }
 
-// Initialization
+function navigate(text){
+  const url = formatInput(text);
+  const w = getActiveWebview();
+  if(!w) return;
+  w.loadURL(url);
+}
+
+// initialisation
 function init(){
-  applyTheme();
   bindUI();
-
-  // start with one tab
-  if(state.tabs.length===0) newTab(DEFAULT_START);
-  renderTabs();
   renderBookmarks();
-  renderHistory();
+  // cleanup duplicates if any (hotfix)
+  const all = Array.from(document.querySelectorAll('webview'));
+  if(all.length > state.tabs.length){
+    // keep newest webviews already tracked; remove others
+    all.forEach(w=>{
+      const found = state.tabs.some(t=>t.webview === w);
+      if(!found) try{ w.remove(); }catch(e){}
+    });
+  }
 }
-
-// Expose functions for tab close/switch from sidebar items
-function attachTabUIButtons(){
-  // handled in renderTabs
-}
-
-// Start
 init();
