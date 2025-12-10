@@ -1,6 +1,6 @@
 // renderer.js — tab manager, navigation, bookmarks, simple Zen features
 
-const DEFAULT_START = `file://D:\custom-browser/home/home.html`;
+const DEFAULT_START = `file://${__dirname}/home/home.html`;
 
 
 const viewContainer = document.getElementById('viewContainer');
