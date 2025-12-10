@@ -2,7 +2,6 @@
 
 const DEFAULT_START = `file://${__dirname}/home/home.html`;
 
-
 const viewContainer = document.getElementById('viewContainer');
 const tabsList = document.getElementById('tabsList');
 const bookmarksList = document.getElementById('bookmarksList');
